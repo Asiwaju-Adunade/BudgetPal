@@ -9,7 +9,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ArrowUpFromLine, ArrowDownFromLine, Wallet } from "lucide-react";
-import { getTransactions } from "@/lib/utils";
 import { Transaction } from "@/types/expense";
 import {
   Select,
@@ -23,6 +22,13 @@ import {
 import Summary, { SummaryItem } from "./summary-card";
 import BarChart from "./bar-chart";
 import BudgetSection from "./budget";
+import { useAuth } from "@/context/auth-context";
+import { auth } from "@/lib/firebase";
+import {
+  subscribeTransactions,
+  subscribeUserBudget,
+  saveUserBudgetToFirestore,
+} from "@/lib/firestore-service";
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-NG", {
@@ -33,31 +39,55 @@ function formatCurrency(value: number) {
 }
 
 export default function Dashboard() {
+  const { user, userProfile } = useAuth();
+  const currentUser = user || auth.currentUser;
+  const userId = currentUser?.uid ?? "";
+
+  const rawName =
+    userProfile?.displayName ||
+    currentUser?.displayName ||
+    (typeof window !== "undefined" && userId
+      ? localStorage.getItem(`user_name_${userId}`) || ""
+      : "") ||
+    currentUser?.email?.split("@")[0] ||
+    "User";
+
+  const username = rawName.split(" ")[0];
+
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [monthlyBudget, setMonthlyBudget] = useState(0.0);
+
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
+
   const [budgetSuccess, setBudgetSuccess] = useState("");
 
+  // Subscribe to real-time transactions from Firestore for current user
   useEffect(() => {
-    setTransactions(getTransactions());
-  }, []);
+    if (!userId) {
+      setTransactions([]);
+      return;
+    }
 
+    const unsubscribe = subscribeTransactions(userId, (list) => {
+      setTransactions(list);
+    });
+
+    return () => unsubscribe();
+  }, [userId]);
+
+  // Subscribe to real-time budget from Firestore for current user & selected month
   useEffect(() => {
-    const handleStorageChange = () => {
-      setTransactions(getTransactions());
-    };
+    if (!userId || !selectedMonth) return;
 
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
+    const unsubscribe = subscribeUserBudget(userId, selectedMonth, (amount) => {
+      setMonthlyBudget(amount);
+    });
 
-  useEffect(() => {
-    const savedBudget = localStorage.getItem(`budget_${selectedMonth}`);
-    setMonthlyBudget(savedBudget ? Number(savedBudget) : 0.00);
-  }, [selectedMonth]);
+    return () => unsubscribe();
+  }, [userId, selectedMonth]);
 
   useEffect(() => {
     if (!budgetSuccess) return;
@@ -69,9 +99,14 @@ export default function Dashboard() {
     return () => window.clearTimeout(timer);
   }, [budgetSuccess]);
 
-  const handleSaveBudget = () => {
-    localStorage.setItem(`budget_${selectedMonth}`, String(monthlyBudget));
-    setBudgetSuccess("Budget saved successfully!");
+  const handleSaveBudget = async () => {
+    if (!userId) return;
+    try {
+      await saveUserBudgetToFirestore(userId, selectedMonth, monthlyBudget);
+      setBudgetSuccess("Budget saved successfully!");
+    } catch (err) {
+      console.error("Failed to save budget:", err);
+    }
   };
 
   const monthOptions = useMemo(() => {
@@ -80,11 +115,19 @@ export default function Dashboard() {
 
     for (let i = 0; i < 12; i++) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const label = d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
-      const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const label = d.toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      });
+
+      const value = `${d.getFullYear()}-${String(
+        d.getMonth() + 1
+      ).padStart(2, "0")}`;
+
       options.push({ label, value });
     }
 
+    // Include additional months from transactions if available
     transactions.forEach((t) => {
       if (t.date) {
         const parts = t.date.split("-");
@@ -125,10 +168,17 @@ export default function Dashboard() {
     [monthlyTransactions]
   );
 
-  const totalBalance = useMemo(() => totalIncome - totalExpense, [totalIncome, totalExpense]);
+  const totalBalance = useMemo(
+    () => totalIncome - totalExpense,
+    [totalIncome, totalExpense]
+  );
+
   const remainingBudget = monthlyBudget - totalExpense;
 
-  const budgetPercentage = monthlyBudget > 0 ? Math.min((totalExpense / monthlyBudget) * 100, 100) : 0;
+  const budgetPercentage =
+    monthlyBudget > 0
+      ? Math.min((totalExpense / monthlyBudget) * 100, 100)
+      : 0;
 
   const budgetProgressColor =
     budgetPercentage >= 90
@@ -141,8 +191,10 @@ export default function Dashboard() {
     const total = totalIncome + totalExpense;
     const radius = 72;
     const circumference = 2 * Math.PI * radius;
-    const incomeLength = total === 0 ? 0 : (totalIncome / total) * circumference;
-    const expenseLength = total === 0 ? 0 : (totalExpense / total) * circumference;
+    const incomeLength =
+      total === 0 ? 0 : (totalIncome / total) * circumference;
+    const expenseLength =
+      total === 0 ? 0 : (totalExpense / total) * circumference;
 
     return {
       total,
@@ -150,8 +202,10 @@ export default function Dashboard() {
       circumference,
       incomeLength,
       expenseLength,
-      incomePercentage: total === 0 ? 0 : Math.round((totalIncome / total) * 100),
-      expensePercentage: total === 0 ? 0 : Math.round((totalExpense / total) * 100),
+      incomePercentage:
+        total === 0 ? 0 : Math.round((totalIncome / total) * 100),
+      expensePercentage:
+        total === 0 ? 0 : Math.round((totalExpense / total) * 100),
     };
   }, [totalIncome, totalExpense]);
 
@@ -185,25 +239,41 @@ export default function Dashboard() {
 
       <main className="lg:ml-72 p-4 md:p-6">
         <div className="max-w-6xl mx-auto space-y-6">
+
+          {/* Welcome card */}
           <div className="flex flex-col md:flex-row gap-4 md:items-stretch">
             <Card className="shadow-sm flex-1">
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-semibold">Hello Adunade 👋</CardTitle>
+                <CardTitle className="text-lg font-semibold">
+                  Hello {username} 👋
+                </CardTitle>
               </CardHeader>
+
               <CardContent>
-                <p className="text-gray-600 dark:text-slate-400">Here is what's happening with your finances.</p>
+                <p className="text-gray-600 dark:text-slate-400">
+                  Here is what's happening with your finances.
+                </p>
               </CardContent>
             </Card>
 
+            {/* Month selector */}
             <Card className="shadow-sm p-4 flex flex-col justify-center gap-2 md:w-80">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Selected Month</span>
-              <Select value={selectedMonth} onValueChange={(val) => setSelectedMonth(val || selectedMonth)}>
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">
+                Selected Month
+              </span>
+
+              <Select
+                value={selectedMonth}
+                onValueChange={(val) => setSelectedMonth(val || selectedMonth)}
+              >
                 <SelectTrigger className="w-full py-6 pr-8 text-base">
                   <SelectValue placeholder="Select Month" />
                 </SelectTrigger>
+
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Available Months</SelectLabel>
+
                     {monthOptions.map((opt) => (
                       <SelectItem key={opt.value} value={opt.value}>
                         {opt.label}
@@ -215,8 +285,10 @@ export default function Dashboard() {
             </Card>
           </div>
 
+          {/* Summary cards */}
           <Summary items={summaryItems} />
 
+          {/* Budget section */}
           <BudgetSection
             monthlyBudget={monthlyBudget}
             onBudgetChange={setMonthlyBudget}
@@ -228,6 +300,7 @@ export default function Dashboard() {
             budgetProgressColor={budgetProgressColor}
           />
 
+          {/* Chart section */}
           <BarChart
             chartData={chartData}
             totalIncome={totalIncome}

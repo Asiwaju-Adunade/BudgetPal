@@ -5,15 +5,18 @@ import { Transaction } from "@/types/expense";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
-const KEY = "budgetpal-transactions";
 
-export const saveTransactions = (transactions: Transaction[]) => {
-  localStorage.setItem(KEY, JSON.stringify(transactions));
-};
+export function saveTransactions(userId: string, transactions: Transaction[]) {
+   if (typeof window === "undefined") return;
+  localStorage.setItem(
+    `transactions_${userId}`,
+    JSON.stringify(transactions)
+  );
+}
 
-export const getTransactions = (): Transaction[] => {
+export function getTransactions(userId: string): Transaction[] {
   if (typeof window === "undefined") return [];
 
-  const data = localStorage.getItem(KEY);
+   const data = localStorage.getItem(`transactions_${userId}`);
   return data ? JSON.parse(data) : [];
 };

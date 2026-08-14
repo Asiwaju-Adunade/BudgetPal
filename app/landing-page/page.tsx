@@ -31,7 +31,7 @@ export default function HeroSection() {
 
               <div className="mt-8 flex justify-center pb-10 lg:justify-start">
                 <Button className="">
-                  <Link href="/dashboard">Get Started</Link>
+                  <Link href="/auth/login">Get Started</Link>
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </div>

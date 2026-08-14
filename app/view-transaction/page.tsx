@@ -5,7 +5,8 @@ import Sidebar from "@/components/ui/sidebar";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
-import { getTransactions, saveTransactions } from "@/lib/utils";
+import { useAuth } from '@/context/auth-context';
+import { auth } from "@/lib/firebase";
 import { Transaction } from "@/types/expense";
 import {
   Select,
@@ -16,6 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  subscribeTransactions,
+  deleteTransactionFromFirestore,
+} from "@/lib/firestore-service";
 
 function formatLocalDate(dateStr: string) {
   const parts = dateStr.split("-");
@@ -38,6 +43,8 @@ function formatCurrency(value: number) {
 }
 
 export default function ViewTransactionPage() {
+  const { user } = useAuth();
+  const currentUser = user || auth.currentUser;
   const [selectedTab, setSelectedTab] = useState<"all" | "income" | "expense">("all");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
@@ -48,9 +55,20 @@ export default function ViewTransactionPage() {
 
   const [selectedMonth, setSelectedMonth] = useState(currentMonthValue);
 
+  // Subscribe to real-time transactions from Firestore for current user
   useEffect(() => {
-    setTransactions(getTransactions());
-  }, []);
+    const uid = currentUser?.uid;
+    if (!uid) {
+      setTransactions([]);
+      return;
+    }
+
+    const unsubscribe = subscribeTransactions(uid, (list) => {
+      setTransactions(list);
+    });
+
+    return () => unsubscribe();
+  }, [currentUser]);
 
   const monthOptions = useMemo(() => {
     const options: { label: string; value: string }[] = [];
@@ -93,19 +111,19 @@ export default function ViewTransactionPage() {
     return monthlyTransactions.filter((transaction) => transaction.type === selectedTab);
   }, [selectedTab, monthlyTransactions]);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this transaction?"
     );
 
-    if (!confirmDelete) return;
+    const uid = currentUser?.uid;
+    if (!confirmDelete || !uid) return;
 
-    const updatedTransactions = transactions.filter(
-      (transaction) => transaction.id !== id
-    );
-
-    setTransactions(updatedTransactions);
-    saveTransactions(updatedTransactions);
+    try {
+      await deleteTransactionFromFirestore(uid, id);
+    } catch (err) {
+      console.error("Failed to delete transaction:", err);
+    }
   };
 
   return (

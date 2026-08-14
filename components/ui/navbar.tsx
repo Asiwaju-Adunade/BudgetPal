@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Wallet, Menu } from "lucide-react";
 import Button from "./button";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 const navLinks = [
   { name: "Home", href: "/landing-page" },
@@ -15,6 +16,7 @@ const navLinks = [
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   return (
     <>
       <nav className="border-b bg-white sticky top-0 z-50">
@@ -51,8 +53,8 @@ export default function Navbar() {
             </div>
 
             <div className="hidden md:flex items-center mr-15 gap-7">
-              <Button variant="secondary">Log In</Button>
-              <Button variant="primary">Get Started</Button>
+              <Button variant="secondary" onClick={() => router.push('/auth/login')}>Log In</Button>
+              <Button variant="primary" onClick={() => router.push('/auth/signup')}>Get Started</Button>
             </div>
 
             {/* Hamburger Menu Button */}
@@ -60,7 +62,7 @@ export default function Navbar() {
               className="md:hidden rounded-lg p-2 hover:bg-gray-100"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="h-7 w-7 text-black" />
             </button>
           </div>
 
@@ -88,8 +90,8 @@ export default function Navbar() {
               </div>
 
               <div className="flex flex-col mx-4 gap-5">
-                <Button variant="secondary">Log In</Button>
-                <Button variant="primary">Get Started</Button>
+                <Button variant="secondary" onClick={() => { setIsMobileMenuOpen(false); router.push('/auth/login'); }}>Log In</Button>
+                <Button variant="primary" onClick={() => { setIsMobileMenuOpen(false); router.push('/auth/signup'); }}>Get Started</Button>
               </div>
             </div>
           )}
