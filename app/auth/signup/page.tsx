@@ -159,7 +159,7 @@ export default function SignupPage() {
                     email: undefined,
                   }));
                 }}
-                className="text-base h-14 rounded-full px-5 border-2 border-gray-400 text-black"
+                className="text-base h-14 rounded-full px-5 border-2 border-gray-300 text-black"
               />
 
               {errors.email && (
@@ -182,7 +182,7 @@ export default function SignupPage() {
                     general: undefined,
                   }));
                 }}
-                className="pr-12 text-base h-14 rounded-full px-5 border-2 border-gray-400 text-black"
+                className="pr-12 text-base h-14 rounded-full px-5 border-2 border-gray-300 text-black"
               />
 
               <button
@@ -218,7 +218,7 @@ export default function SignupPage() {
                     confirmPassword: undefined,
                   }));
                 }}
-                className="pr-12 text-base h-14 rounded-full px-5 border-2 border-gray-400 text-black"
+                className="pr-12 text-base h-14 rounded-full px-5 border-2 border-gray-300 text-black"
               />
 
               <button
