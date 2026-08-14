@@ -60,7 +60,7 @@ export default function LoginPage() {
           </p>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="mt-10 space-y-8">
+          <form onSubmit={handleSubmit} className="mt-10 border border-gray-300 text-black space-y-8">
             {/* Email */}
             <Input
               label="Email address"
@@ -68,7 +68,7 @@ export default function LoginPage() {
               value={email}
               placeholder="Enter your email"
               onChange={(e) => setEmail(e.target.value)}
-              className="h-14 rounded-full px-5 text-base"
+              className="h-14 rounded-full border border-gray-300 text-black px-5 text-base"
             />
 
             {/* Password */}
