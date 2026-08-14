@@ -137,7 +137,7 @@ export default function SignupPage() {
                     name: undefined,
                   }));
                 }}
-                className="text-base h-14 rounded-full px-5 border-2 border-gray-400 text-black"
+                className="text-base h-14 rounded-full px-5 border-2 border-gray-300 text-black"
               />
 
               {errors.name && (
