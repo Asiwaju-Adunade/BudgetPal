@@ -11,7 +11,7 @@ type InputProps = React.ComponentProps<"input"> & { label?: string }
 function Input({ className, type, label, ...props }: InputProps) {
   return (
     <div>
-      {label && <label className="text-sm font-medium text-foreground mb-1 block">{label}</label>}
+      {label && <label className="text-sm font-medium text-black mb-1 block">{label}</label>}
       <InputPrimitive
         type={type}
         data-slot="input"
