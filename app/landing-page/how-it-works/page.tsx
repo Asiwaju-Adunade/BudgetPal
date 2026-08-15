@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
-import { Wallet, PlusCircle, ChartNoAxesColumn, Target, CreditCard } from 'lucide-react'
+import { Wallet, PlusCircle, ChartNoAxesColumn, Target, CreditCard,ChartLine } from 'lucide-react'
 import Navbar from '@/components/ui/navbar'
 
 const howItWorksData = [
@@ -26,27 +26,37 @@ const howItWorksData = [
   },
 
   {
-    id:3,
-    icon:CreditCard,
-    title: 'View Transactions.',
-    description: 'Filter and manage all your saved transactions to understand where your money is coming from and where it is going.',
-    gradient: 'from-blue-800 to-blue-300'
-  },
-  {
-    id: 4,
-    icon: ChartNoAxesColumn,
-    title: 'Track & Organize',
-    description: 'Organize your data and keep all your income and expenses in one place, organize your transactions by category, and stay in control of your finances every day.',
-    gradient: 'from-yellow-800 to-yellow-300'
-  },
-  {
-    id: 5,
+    id: 3,
     icon: Target,
     title: 'Set Budgets',
     description:
       'Set a monthly budget to help you track your expenses, control your spending and see how much you have left for the month.',
     gradient: 'from-pink-800 to-pink-300'
-  }
+  },
+
+  {
+    id:4,
+    icon:CreditCard,
+    title: 'View Transactions.',
+    description: 'Filter and manage all your saved transactions to understand where your money is coming from and where it is going.',
+    gradient: 'from-blue-800 to-blue-300'
+  },
+
+  {
+    id:5,
+    icon: ChartLine,
+    title: 'View Analytics',
+    description:'Track where your money goes, monitor your income, expenses, balance, and spending categories, identify your biggest spending categories, and make smarter financial decisions.',
+    gradient: 'from-green-800 to-green-300'
+  },
+  {
+    id: 6,
+    icon: ChartNoAxesColumn,
+    title: 'Track & Organize',
+    description: 'Organize your data and keep all your income and expenses in one place, organize your transactions by category, and stay in control of your finances every day.',
+    gradient: 'from-yellow-800 to-yellow-300'
+  },
+  
 ]
 
 export default function HowItWorksSection () {

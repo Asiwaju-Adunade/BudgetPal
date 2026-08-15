@@ -8,7 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowUpFromLine, ArrowDownFromLine, Wallet } from "lucide-react";
+import Link from "next/link";
+import { ArrowUpFromLine, ArrowDownFromLine, Wallet, Plus } from "lucide-react";
 import { Transaction } from "@/types/expense";
 import {
   Select,
@@ -237,7 +238,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       <Sidebar />
 
-      <main className="lg:ml-72 p-4 md:p-6">
+      <main className="lg:ml-72 p-4 py-10  md:p-6">
         <div className="max-w-6xl mx-auto space-y-6">
 
           {/* Welcome card */}
@@ -307,6 +308,16 @@ export default function Dashboard() {
             totalExpense={totalExpense}
             totalBalance={totalBalance}
           />
+
+          {/* plus icon for the mobile */}
+          <div className="md:hidden fixed bottom-4 z-50">
+  <Link
+    href="/add-transaction"
+    className="w-12 h-12 rounded-full bg-green-600 flex items-center justify-center shadow-lg hover:bg-green-700 transition"
+  >
+    <Plus className="w-7 h-7 text-white" />
+  </Link>
+</div>
         </div>
       </main>
     </div>
